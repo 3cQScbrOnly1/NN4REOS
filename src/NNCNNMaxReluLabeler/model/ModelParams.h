@@ -11,9 +11,6 @@ public:
 	Alphabet extWordAlpha; // should be initialized outside
 	LookupTable extWords; // should be initialized outside
 	UniParams hidden_linear;
-	LSTMParams lstm_left_params; 
-	LSTMParams lstm_right_params; 
-	UniParams bi_lstm_linear;
 	UniParams olayer_linear; // output
 public:
 	Alphabet labelAlpha; // should be initialized outside
@@ -34,10 +31,7 @@ public:
 		opts.labelSize = labelAlpha.size();
 		opts.inputSize = opts.windowOutput;
 		hidden_linear.initial(opts.hiddenSize, opts.inputSize, true, mem);
-		lstm_left_params.initial(opts.rnnHiddenSize, opts.hiddenSize, mem);
-		lstm_right_params.initial(opts.rnnHiddenSize, opts.hiddenSize, mem);
-		bi_lstm_linear.initial(opts.biRNNHiddenSize, opts.rnnHiddenSize * 2, true, mem);
-		olayer_linear.initial(opts.labelSize, opts.biRNNHiddenSize * 3, false, mem);
+		olayer_linear.initial(opts.labelSize, opts.hiddenSize, false, mem);
 		return true;
 	}
 
@@ -46,9 +40,6 @@ public:
 		words.exportAdaParams(ada);
 		extWords.exportAdaParams(ada);
 		hidden_linear.exportAdaParams(ada);
-		lstm_left_params.exportAdaParams(ada);
-		lstm_right_params.exportAdaParams(ada);
-		bi_lstm_linear.exportAdaParams(ada);
 		olayer_linear.exportAdaParams(ada);
 	}
 
@@ -67,7 +58,9 @@ public:
 	}
 
 	void loadModel(const string& inFile){
+
 	}
+
 };
 
 #endif /* SRC_ModelParams_H_ */

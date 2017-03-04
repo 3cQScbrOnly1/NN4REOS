@@ -16,16 +16,11 @@ public:
 	vector<ConcatNode> _word_represents;
 	WindowBuilder _word_window;
 	vector<UniNode> _hidden;
-	LSTMBuilder _lstm_left;
-	LSTMBuilder _lstm_right;
-	vector<ConcatNode> _concat_bi_lstm;
-	vector<UniNode> _bi_lstm_hidden;
 
 	AvgPoolNode _avg_pooling;
 	MaxPoolNode _max_pooling;
 	MinPoolNode _min_pooling;
 
-	ConcatNode _concat_pool;
 	LinearNode _output;
 
 	unordered_map<string, int>* p_word_stats;
@@ -45,10 +40,6 @@ public:
 		_word_represents.resize(sent_length);
 		_word_window.resize(sent_length);
 		_hidden.resize(sent_length);
-		_lstm_left.resize(sent_length);
-		_lstm_right.resize(sent_length);
-		_concat_bi_lstm.resize(sent_length);
-		_bi_lstm_hidden.resize(sent_length);
 		_avg_pooling.setParam(sent_length);
 		_max_pooling.setParam(sent_length);
 		_min_pooling.setParam(sent_length);
@@ -61,10 +52,6 @@ public:
 		_word_represents.clear();
 		_word_window.clear();
 		_hidden.clear();
-		_concat_bi_lstm.clear();
-		_bi_lstm_hidden.clear();
-		_lstm_left.clear();
-		_lstm_right.clear();
 	}
 
 public:
@@ -77,18 +64,12 @@ public:
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
 			_hidden[idx].setParam(&model.hidden_linear);
 			_hidden[idx].init(opts.hiddenSize, opts.dropProb, mem);
-			_concat_bi_lstm[idx].init(opts.biRNNHiddenSize * 2, -1, mem);
-			_bi_lstm_hidden[idx].setParam(&model.bi_lstm_linear);
-			_bi_lstm_hidden[idx].init(opts.biRNNHiddenSize, opts.dropProb, mem);
+			_hidden[idx].setFunctions(&frelu, &drelu);
 		}
-
 		_word_window.init(opts.wordDim + opts.extWordDim, opts.wordContext, mem);
-		_lstm_left.init(&model.lstm_left_params, opts.dropProb, true, mem);
-		_lstm_right.init(&model.lstm_right_params, opts.dropProb, false, mem);
-		_avg_pooling.init(opts.biRNNHiddenSize, -1, mem);
-		_max_pooling.init(opts.biRNNHiddenSize, -1, mem);
-		_min_pooling.init(opts.biRNNHiddenSize, -1, mem);
-		_concat_pool.init(opts.biRNNHiddenSize * 3, -1, mem);
+		_avg_pooling.init(opts.hiddenSize, -1, mem);
+		_max_pooling.init(opts.hiddenSize, -1, mem);
+		_min_pooling.init(opts.hiddenSize, -1, mem);
 		_output.setParam(&model.olayer_linear);
 		_output.init(opts.labelSize, -1, mem);
 
@@ -134,25 +115,8 @@ public:
 		for (int i = 0; i < words_num; i++) {
 			_hidden[i].forward(this, &_word_window._outputs[i]);
 		}
-
-		_lstm_left.forward(this, getPNodes(_hidden, words_num));
-		_lstm_right.forward(this, getPNodes(_hidden, words_num));
-
-		for (int i = 0; i < words_num; i++) {
-			_concat_bi_lstm[i].forward(this, &_lstm_left._hiddens[i], &_lstm_right._hiddens[i]);
-		}
-
-		for (int i = 0; i < words_num; i++) {
-			_bi_lstm_hidden[i].forward(this, &_concat_bi_lstm[i]);
-		}
-
-
-		_max_pooling.forward(this, getPNodes(_bi_lstm_hidden, words_num));
-		_min_pooling.forward(this, getPNodes(_bi_lstm_hidden, words_num));
-		_avg_pooling.forward(this, getPNodes(_bi_lstm_hidden, words_num));
-
-		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
-		_output.forward(this, &_concat_pool);
+		_max_pooling.forward(this, getPNodes(_hidden, words_num));
+		_output.forward(this, &_max_pooling);
 	}
 };
 
