@@ -116,7 +116,8 @@ public:
 
 	void updateModel() {
 		//_ada.update();
-		_ada.update(5.0);
+		//_ada.update(5.0);
+		_ada.updateAdam(10);
 	}
 
 	void checkgrad(const vector<Example>& examples, int iter){
