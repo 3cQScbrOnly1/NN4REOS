@@ -1,4 +1,4 @@
-#include "NNCNNLabeler.h"
+#include "NNCNNLSTMLabeler.h"
 
 #include "Argument_helper.h"
 

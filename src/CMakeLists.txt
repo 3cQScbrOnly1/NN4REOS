@@ -4,5 +4,5 @@ include_directories(
 )
 
 add_subdirectory(NNCNNLabeler)
-add_subdirectory(NNCNNMaxReluLabeler)
 add_subdirectory(NNCNNLSTMLabeler)
+add_subdirectory(NNCNNSLSTMLabeler)

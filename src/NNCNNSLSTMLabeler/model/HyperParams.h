@@ -15,6 +15,8 @@ struct HyperParams{
 	dtype adaEps; // for optimization
 
 	int hiddenSize;
+	int biRNNHiddenSize;
+	int rnnHiddenSize;
 	int wordContext;
 	int wordWindow;
 	int windowOutput;
@@ -40,6 +42,8 @@ public:
 		adaAlpha = opt.adaAlpha;
 		adaEps = opt.adaEps;
 		hiddenSize = opt.hiddenSize;
+		rnnHiddenSize = opt.rnnHiddenSize;
+		biRNNHiddenSize = opt.biRNNHiddenSize;
 		wordContext = opt.wordcontext;
 		dropProb = opt.dropProb;
 

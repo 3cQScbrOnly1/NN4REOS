@@ -16,11 +16,13 @@ public:
 	vector<ConcatNode> _word_represents;
 	WindowBuilder _word_window;
 	vector<UniNode> _hidden;
+	LSTMBuilder _lstm;
 
 	AvgPoolNode _avg_pooling;
 	MaxPoolNode _max_pooling;
 	MinPoolNode _min_pooling;
 
+	ConcatNode _concat_pool;
 	LinearNode _output;
 
 	unordered_map<string, int>* p_word_stats;
@@ -40,6 +42,7 @@ public:
 		_word_represents.resize(sent_length);
 		_word_window.resize(sent_length);
 		_hidden.resize(sent_length);
+		_lstm.resize(sent_length);
 		_avg_pooling.setParam(sent_length);
 		_max_pooling.setParam(sent_length);
 		_min_pooling.setParam(sent_length);
@@ -52,6 +55,7 @@ public:
 		_word_represents.clear();
 		_word_window.clear();
 		_hidden.clear();
+		_lstm.clear();
 	}
 
 public:
@@ -64,12 +68,14 @@ public:
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
 			_hidden[idx].setParam(&model.hidden_linear);
 			_hidden[idx].init(opts.hiddenSize, opts.dropProb, mem);
-			_hidden[idx].setFunctions(&frelu, &drelu);
 		}
+
 		_word_window.init(opts.wordDim + opts.extWordDim, opts.wordContext, mem);
-		_avg_pooling.init(opts.hiddenSize, -1, mem);
-		_max_pooling.init(opts.hiddenSize, -1, mem);
-		_min_pooling.init(opts.hiddenSize, -1, mem);
+		_lstm.init(&model.lstm_params, opts.dropProb, true, mem);
+		_avg_pooling.init(opts.rnnHiddenSize, -1, mem);
+		_max_pooling.init(opts.rnnHiddenSize, -1, mem);
+		_min_pooling.init(opts.rnnHiddenSize, -1, mem);
+		_concat_pool.init(opts.rnnHiddenSize * 3, -1, mem);
 		_output.setParam(&model.olayer_linear);
 		_output.init(opts.labelSize, -1, mem);
 
@@ -115,8 +121,15 @@ public:
 		for (int i = 0; i < words_num; i++) {
 			_hidden[i].forward(this, &_word_window._outputs[i]);
 		}
-		_max_pooling.forward(this, getPNodes(_hidden, words_num));
-		_output.forward(this, &_max_pooling);
+
+		_lstm.forward(this, getPNodes(_hidden, words_num));
+
+		_max_pooling.forward(this, getPNodes(_lstm._hiddens, words_num));
+		_min_pooling.forward(this, getPNodes(_lstm._hiddens, words_num));
+		_avg_pooling.forward(this, getPNodes(_lstm._hiddens, words_num));
+
+		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
+		_output.forward(this, &_concat_pool);
 	}
 };
 
