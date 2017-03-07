@@ -10,7 +10,7 @@ public:
 	LookupTable words; // should be initialized outside
 	Alphabet extWordAlpha; // should be initialized outside
 	LookupTable extWords; // should be initialized outside
-	RNNParams rnn_project;
+	GRNNParams grnn_project;
 	UniParams olayer_linear; // output
 public:
 	Alphabet labelAlpha; // should be initialized outside
@@ -27,7 +27,7 @@ public:
 		opts.wordDim = words.nDim;
 		opts.extWordDim = extWords.nDim;
 		opts.labelSize = labelAlpha.size();
-		rnn_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
+		grnn_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
 		opts.inputSize = opts.rnnHiddenSize * 3;
 		olayer_linear.initial(opts.labelSize, opts.inputSize, false, mem);
 		return true;
@@ -37,7 +37,7 @@ public:
 	void exportModelParams(ModelUpdate& ada){
 		words.exportAdaParams(ada);
 		extWords.exportAdaParams(ada);
-		rnn_project.exportAdaParams(ada);
+		grnn_project.exportAdaParams(ada);
 		olayer_linear.exportAdaParams(ada);
 	}
 
