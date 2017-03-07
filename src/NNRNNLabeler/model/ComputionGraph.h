@@ -102,7 +102,11 @@ public:
 		if (words_num > max_sentence_length)
 			words_num = max_sentence_length;
 		for (int i = 0; i < words_num; i++) {
-			const string& word = p_change_word(feature.m_tweet_words[i]);
+			string word;
+			if (bTrain)
+				word = p_change_word(feature.m_tweet_words[i]);
+			else
+				word = feature.m_tweet_words[i];
 			_word_inputs[i].forward(this, word);
 			_ext_word_inputs[i].forward(this, word);
 			_word_represents[i].forward(this, &_word_inputs[i], &_ext_word_inputs[i]);
