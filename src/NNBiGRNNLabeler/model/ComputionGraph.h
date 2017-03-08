@@ -17,7 +17,7 @@ public:
 	GRNNBuilder _grnn_left;
 	GRNNBuilder _grnn_right;
 
-	vector<BiNode> _bi_grnn_hidden;
+	vector<BiNode> _bi_grnn_hiddens;
 
 	AvgPoolNode _avg_pooling;
 	MaxPoolNode _max_pooling;
@@ -44,7 +44,7 @@ public:
 		_word_represents.resize(sent_length);
 		_grnn_left.resize(sent_length);
 		_grnn_right.resize(sent_length);
-		_bi_grnn_hidden.resize(sent_length);
+		_bi_grnn_hiddens.resize(sent_length);
 		_avg_pooling.setParam(sent_length);
 		_max_pooling.setParam(sent_length);
 		_min_pooling.setParam(sent_length);
@@ -57,7 +57,7 @@ public:
 		_word_represents.clear();
 		_grnn_left.clear();
 		_grnn_right.clear();
-		_bi_grnn_hidden.clear();
+		_bi_grnn_hiddens.clear();
 	}
 
 public:
@@ -68,8 +68,8 @@ public:
 			_ext_word_inputs[idx].setParam(&model.extWords);
 			_ext_word_inputs[idx].init(opts.extWordDim, opts.dropProb, mem);
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
-			_bi_grnn_hidden[idx].setParam(&model.bi_grnn_project);
-			_bi_grnn_hidden[idx].init(opts.hiddenSize, -1, mem);
+			_bi_grnn_hiddens[idx].setParam(&model.bi_grnn_project);
+			_bi_grnn_hiddens[idx].init(opts.hiddenSize, opts.dropProb, mem);
 		}
 		_grnn_left.init(&model.grnn_left_project, opts.dropProb, true, mem);
 		_grnn_right.init(&model.grnn_right_project, opts.dropProb, false, mem);
@@ -126,12 +126,12 @@ public:
 		_grnn_right.forward(this, getPNodes(_word_represents, words_num));
 
 		for (int i = 0; i < words_num; i++) {
-			_bi_grnn_hidden[i].forward(this, &_grnn_left._output[i], &_grnn_right._output[i]);
+			_bi_grnn_hiddens[i].forward(this, &_grnn_left._output[i], &_grnn_right._output[i]);
 		}
 
-		_max_pooling.forward(this, getPNodes(_bi_grnn_hidden, words_num));
-		_min_pooling.forward(this, getPNodes(_bi_grnn_hidden, words_num));
-		_avg_pooling.forward(this, getPNodes(_bi_grnn_hidden, words_num));
+		_max_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
+		_min_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
+		_avg_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
 		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
 		_output.forward(this, &_concat_pool);
 	}

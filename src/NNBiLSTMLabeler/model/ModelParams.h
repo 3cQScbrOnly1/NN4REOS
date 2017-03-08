@@ -10,7 +10,9 @@ public:
 	LookupTable words; // should be initialized outside
 	Alphabet extWordAlpha; // should be initialized outside
 	LookupTable extWords; // should be initialized outside
-	LSTMParams lstm_project;
+	LSTMParams lstm_left_project;
+	LSTMParams lstm_right_project;
+	BiParams bi_lstm_project;
 	UniParams olayer_linear; // output
 public:
 	Alphabet labelAlpha; // should be initialized outside
@@ -27,8 +29,10 @@ public:
 		opts.wordDim = words.nDim;
 		opts.extWordDim = extWords.nDim;
 		opts.labelSize = labelAlpha.size();
-		lstm_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
-		opts.inputSize = opts.rnnHiddenSize * 3;
+		lstm_left_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
+		lstm_right_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
+		bi_lstm_project.initial(opts.hiddenSize, opts.rnnHiddenSize, opts.rnnHiddenSize, true, mem);
+		opts.inputSize = opts.hiddenSize * 3;
 		olayer_linear.initial(opts.labelSize, opts.inputSize, false, mem);
 		return true;
 	}
@@ -37,7 +41,9 @@ public:
 	void exportModelParams(ModelUpdate& ada){
 		words.exportAdaParams(ada);
 		extWords.exportAdaParams(ada);
-		lstm_project.exportAdaParams(ada);
+		lstm_left_project.exportAdaParams(ada);
+		lstm_right_project.exportAdaParams(ada);
+		bi_lstm_project.exportAdaParams(ada);
 		olayer_linear.exportAdaParams(ada);
 	}
 

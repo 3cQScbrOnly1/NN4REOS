@@ -10,4 +10,4 @@ add_subdirectory(NNLSTMLabeler)
 
 #add_subdirectory(NNBiRNNLabeler)
 add_subdirectory(NNBiGRNNLabeler)
-#add_subdirectory(NNBiLSTMLabeler)
+add_subdirectory(NNBiLSTMLabeler)
