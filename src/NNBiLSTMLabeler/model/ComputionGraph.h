@@ -123,9 +123,15 @@ public:
 		}
 
 		_lstm_left.forward(this, getPNodes(_word_represents, words_num));
-		_max_pooling.forward(this, getPNodes(_lstm_left._hiddens, words_num));
-		_min_pooling.forward(this, getPNodes(_lstm_left._hiddens, words_num));
-		_avg_pooling.forward(this, getPNodes(_lstm_left._hiddens, words_num));
+		_lstm_right.forward(this, getPNodes(_word_represents, words_num));
+
+		for (int i = 0; i < words_num; i++) {
+			_bi_lstm_hiddens[i].forward(this, &_lstm_left._hiddens[i], &_lstm_right._hiddens[i]);
+		}
+
+		_max_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
+		_min_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
+		_avg_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
 		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
 		_output.forward(this, &_concat_pool);
 	}
