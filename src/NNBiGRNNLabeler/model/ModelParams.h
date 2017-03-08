@@ -31,8 +31,8 @@ public:
 		opts.labelSize = labelAlpha.size();
 		grnn_left_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
 		grnn_right_project.initial(opts.rnnHiddenSize, opts.wordDim + opts.extWordDim, mem);
-		bi_grnn_project.initial(opts.hiddenSize, opts.rnnHiddenSize, opts.rnnHiddenSize, true, mem);
-		opts.inputSize = opts.hiddenSize * 3;
+		bi_grnn_project.initial(opts.biRNNHiddenSize, opts.rnnHiddenSize, opts.rnnHiddenSize, true, mem);
+		opts.inputSize = opts.biRNNHiddenSize * 3;
 		olayer_linear.initial(opts.labelSize, opts.inputSize, false, mem);
 		return true;
 	}

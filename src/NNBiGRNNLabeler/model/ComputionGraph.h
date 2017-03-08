@@ -69,14 +69,14 @@ public:
 			_ext_word_inputs[idx].init(opts.extWordDim, opts.dropProb, mem);
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
 			_bi_grnn_hiddens[idx].setParam(&model.bi_grnn_project);
-			_bi_grnn_hiddens[idx].init(opts.hiddenSize, opts.dropProb, mem);
+			_bi_grnn_hiddens[idx].init(opts.biRNNHiddenSize, opts.dropProb, mem);
 		}
 		_grnn_left.init(&model.grnn_left_project, opts.dropProb, true, mem);
 		_grnn_right.init(&model.grnn_right_project, opts.dropProb, false, mem);
-		_avg_pooling.init(opts.hiddenSize, -1, mem);
-		_max_pooling.init(opts.hiddenSize, -1, mem);
-		_min_pooling.init(opts.hiddenSize, -1, mem);
-		_concat_pool.init(opts.hiddenSize * 3, -1, mem);
+		_avg_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_max_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_min_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_concat_pool.init(opts.biRNNHiddenSize * 3, -1, mem);
 		_output.setParam(&model.olayer_linear);
 		_output.init(opts.labelSize, -1, mem);
 

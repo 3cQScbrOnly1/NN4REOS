@@ -14,7 +14,10 @@ public:
 	vector<LookupNode> _word_inputs;
 	vector<LookupNode> _ext_word_inputs;
 	vector<ConcatNode> _word_represents;
-	RNNBuilder _rnn;
+	RNNBuilder _rnn_left;
+	RNNBuilder _rnn_right;
+
+	vector<BiNode> _bi_rnn_hiddens;
 
 	AvgPoolNode _avg_pooling;
 	MaxPoolNode _max_pooling;
@@ -39,7 +42,9 @@ public:
 		_word_inputs.resize(sent_length);
 		_ext_word_inputs.resize(sent_length);
 		_word_represents.resize(sent_length);
-		_rnn.resize(sent_length);
+		_rnn_left.resize(sent_length);
+		_rnn_right.resize(sent_length);
+		_bi_rnn_hiddens.resize(sent_length);
 		_avg_pooling.setParam(sent_length);
 		_max_pooling.setParam(sent_length);
 		_min_pooling.setParam(sent_length);
@@ -50,7 +55,7 @@ public:
 		_word_inputs.clear();
 		_ext_word_inputs.clear();
 		_word_represents.clear();
-		_rnn.clear();
+		_rnn_left.clear();
 	}
 
 public:
@@ -61,12 +66,15 @@ public:
 			_ext_word_inputs[idx].setParam(&model.extWords);
 			_ext_word_inputs[idx].init(opts.extWordDim, opts.dropProb, mem);
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
+			_bi_rnn_hiddens[idx].setParam(&model.bi_rnn_project);
+			_bi_rnn_hiddens[idx].init(opts.biRNNHiddenSize, opts.dropProb, mem);
 		}
-		_rnn.init(&model.rnn_project, opts.dropProb, true, mem);
-		_avg_pooling.init(opts.rnnHiddenSize, -1, mem);
-		_max_pooling.init(opts.rnnHiddenSize, -1, mem);
-		_min_pooling.init(opts.rnnHiddenSize, -1, mem);
-		_concat_pool.init(opts.rnnHiddenSize * 3, -1, mem);
+		_rnn_left.init(&model.rnn_left_project, opts.dropProb, true, mem);
+		_rnn_right.init(&model.rnn_right_project, opts.dropProb, false, mem);
+		_avg_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_max_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_min_pooling.init(opts.biRNNHiddenSize, -1, mem);
+		_concat_pool.init(opts.biRNNHiddenSize * 3, -1, mem);
 		_output.setParam(&model.olayer_linear);
 		_output.init(opts.labelSize, -1, mem);
 
@@ -112,10 +120,16 @@ public:
 			_word_represents[i].forward(this, &_word_inputs[i], &_ext_word_inputs[i]);
 		}
 
-		_rnn.forward(this, getPNodes(_word_represents, words_num));
-		_max_pooling.forward(this, getPNodes(_rnn._output, words_num));
-		_min_pooling.forward(this, getPNodes(_rnn._output, words_num));
-		_avg_pooling.forward(this, getPNodes(_rnn._output, words_num));
+		_rnn_left.forward(this, getPNodes(_word_represents, words_num));
+		_rnn_right.forward(this, getPNodes(_word_represents, words_num));
+
+		for (int i = 0; i < words_num; i++) {
+			_bi_rnn_hiddens[i].forward(this, &_rnn_left._output[i], &_rnn_right._output[i]);
+		}
+
+		_max_pooling.forward(this, getPNodes(_bi_rnn_hiddens, words_num));
+		_min_pooling.forward(this, getPNodes(_bi_rnn_hiddens, words_num));
+		_avg_pooling.forward(this, getPNodes(_bi_rnn_hiddens, words_num));
 		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
 		_output.forward(this, &_concat_pool);
 	}
