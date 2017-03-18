@@ -14,10 +14,10 @@ public:
 	vector<LookupNode> _word_inputs;
 	vector<LookupNode> _ext_word_inputs;
 	vector<ConcatNode> _word_represents;
-	LSTMBuilder _lstm_left;
-	LSTMBuilder _lstm_right;
+	GRNNBuilder _grnn_left;
+	GRNNBuilder _grnn_right;
 
-	vector<ConcatNode> _bi_lstm_hiddens;
+	vector<ConcatNode> _bi_grnn_hiddens;
 
 	AvgPoolNode _avg_pooling;
 	MaxPoolNode _max_pooling;
@@ -42,9 +42,9 @@ public:
 		_word_inputs.resize(sent_length);
 		_ext_word_inputs.resize(sent_length);
 		_word_represents.resize(sent_length);
-		_lstm_left.resize(sent_length);
-		_lstm_right.resize(sent_length);
-		_bi_lstm_hiddens.resize(sent_length);
+		_grnn_left.resize(sent_length);
+		_grnn_right.resize(sent_length);
+		_bi_grnn_hiddens.resize(sent_length);
 		_avg_pooling.setParam(sent_length);
 		_max_pooling.setParam(sent_length);
 		_min_pooling.setParam(sent_length);
@@ -55,9 +55,9 @@ public:
 		_word_inputs.clear();
 		_ext_word_inputs.clear();
 		_word_represents.clear();
-		_lstm_left.clear();
-		_lstm_right.clear();
-		_bi_lstm_hiddens.clear();
+		_grnn_left.clear();
+		_grnn_right.clear();
+		_bi_grnn_hiddens.clear();
 	}
 
 public:
@@ -68,10 +68,10 @@ public:
 			_ext_word_inputs[idx].setParam(&model.extWords);
 			_ext_word_inputs[idx].init(opts.extWordDim, opts.dropProb, mem);
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
-			_bi_lstm_hiddens[idx].init(opts.rnnHiddenSize * 2, -1, mem);
+			_bi_grnn_hiddens[idx].init(opts.rnnHiddenSize * 2, -1, mem);
 		}
-		_lstm_left.init(&model.lstm_left_project, opts.dropProb, true, mem);
-		_lstm_right.init(&model.lstm_right_project, opts.dropProb, false, mem);
+		_grnn_left.init(&model.grnn_left_project, opts.dropProb, true, mem);
+		_grnn_right.init(&model.grnn_right_project, opts.dropProb, false, mem);
 		_avg_pooling.init(opts.rnnHiddenSize * 2, -1, mem);
 		_max_pooling.init(opts.rnnHiddenSize * 2, -1, mem);
 		_min_pooling.init(opts.rnnHiddenSize * 2, -1, mem);
@@ -121,16 +121,16 @@ public:
 			_word_represents[i].forward(this, &_word_inputs[i], &_ext_word_inputs[i]);
 		}
 
-		_lstm_left.forward(this, getPNodes(_word_represents, words_num));
-		_lstm_right.forward(this, getPNodes(_word_represents, words_num));
+		_grnn_left.forward(this, getPNodes(_word_represents, words_num));
+		_grnn_right.forward(this, getPNodes(_word_represents, words_num));
 
 		for (int i = 0; i < words_num; i++) {
-			_bi_lstm_hiddens[i].forward(this, &_lstm_left._hiddens[i], &_lstm_right._hiddens[i]);
+			_bi_grnn_hiddens[i].forward(this, &_grnn_left._output[i], &_grnn_right._output[i]);
 		}
 
-		_max_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
-		_min_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
-		_avg_pooling.forward(this, getPNodes(_bi_lstm_hiddens, words_num));
+		_max_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
+		_min_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
+		_avg_pooling.forward(this, getPNodes(_bi_grnn_hiddens, words_num));
 		_concat_pool.forward(this, &_max_pooling, &_min_pooling, &_avg_pooling);
 		_output.forward(this, &_concat_pool);
 	}

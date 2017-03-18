@@ -66,7 +66,7 @@ public:
 			_ext_word_inputs[idx].setParam(&model.extWords);
 			_ext_word_inputs[idx].init(opts.extWordDim, opts.dropProb, mem);
 			_word_represents[idx].init(opts.wordDim + opts.extWordDim, -1, mem);
-			_bi_rnn_hiddens[idx].init(opts.rnnHiddenSize * 2, opts.dropProb, mem);
+			_bi_rnn_hiddens[idx].init(opts.rnnHiddenSize * 2, -1, mem);
 		}
 		_rnn_left.init(&model.rnn_left_project, opts.dropProb, true, mem);
 		_rnn_right.init(&model.rnn_right_project, opts.dropProb, false, mem);
